@@ -15,11 +15,11 @@ Object.assign(mejs.MepDefaults, {
 	/**
 	 * @type {String}
 	 */
-	defaultQuality: 'auto',
+	// defaultQuality: 'auto',
 	/**
 	 * @type {String}
 	 */
-	qualityText: null
+	// qualityText: null
 });
 
 Object.assign(MediaElementPlayer.prototype, {

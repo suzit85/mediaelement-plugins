@@ -5,3 +5,4 @@ local-build
 coverage
 npm-debug.log
 tmp
+dist
