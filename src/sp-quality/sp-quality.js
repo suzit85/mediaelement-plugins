@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Sp Quality feature
+ * Sp quality feature
  *
  * This feature allows the generation of a menu with different video/audio qualities, depending of the elements set
  * in the <source> tags, such as `title` and `data-quality`
@@ -47,14 +47,18 @@ Object.assign(MediaElementPlayer.prototype, {
                 clearInterval(interval);
                 // Manifest file was parsed, invoke loading method
                 media.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-                    t.createQualityLevel(player, data.levels, media);
+
+                    t.createQualityLevel(player, data, media);
                 });
             }
         }, 100);
 
 	}, // build sp-quality end
 
-    createQualityLevel(player, levels, media){
+    createQualityLevel(player, data, media){
+        /* NOTE: Not all smil files have levels- so it will fail if we use something other than wowza */
+        let levels = data.levels;
+
         const t = this;
         t.clearquality(player);
         const qualityTitle = "Quality Levels";
@@ -86,40 +90,40 @@ Object.assign(MediaElementPlayer.prototype, {
 
 
         player.qualityButton = document.createElement('div');
-        player.qualityButton.className = `${t.options.classPrefix}button ${t.options.classPrefix}quality-button`;
+        player.qualityButton.className = `${t.options.classPrefix}button ${t.options.classPrefix}spquality-button`;
         player.qualityButton.innerHTML = `<button type="button" aria-controls="${t.id}" title="${qualityTitle}" ` +
             `aria-label="${qualityTitle}" tabindex="0">${getQualityNameFromValue(playbackQuality)}</button>` +
-            `<div class="${t.options.classPrefix}quality-selector ${t.options.classPrefix}offscreen">` +
-            `<ul class="${t.options.classPrefix}quality-selector-list"></ul>` +
+            `<div class="${t.options.classPrefix}spquality-selector ${t.options.classPrefix}offscreen">` +
+            `<ul class="${t.options.classPrefix}spquality-selector-list"></ul>` +
             `</div>`;
 
         t.addControlElement(player.qualityButton, 'spquality');
 
         for (let i = 0, total = qualityLevels.length; i < total; i++) {
 
-            const inputId = `${t.id}-quality-${qualityLevels[i].value}`;
+            const inputId = `${t.id}-spquality-${qualityLevels[i].value}`;
 
-            player.qualityButton.querySelector('ul').innerHTML += `<li class="${t.options.classPrefix}quality-selector-list-item">` +
-                `<input class="${t.options.classPrefix}quality-selector-input" type="radio" name="${t.id}_quality"` +
+            player.qualityButton.querySelector('ul').innerHTML += `<li class="${t.options.classPrefix}spquality-selector-list-item">` +
+                `<input class="${t.options.classPrefix}spquality-selector-input" type="radio" name="${t.id}_quality"` +
                 `disabled="disabled" value="${qualityLevels[i].value}" id="${inputId}"  ` +
                 `${(qualityLevels[i].value === playbackQuality ? ' checked="checked"' : '')}/>` +
-                `<label class="${t.options.classPrefix}quality-selector-label` +
-                `${(qualityLevels[i].value === playbackQuality ? ` ${t.options.classPrefix}quality-selected` : '')}">` +
+                `<label class="${t.options.classPrefix}spquality-selector-label` +
+                `${(qualityLevels[i].value === playbackQuality ? ` ${t.options.classPrefix}spquality-selected` : '')}">` +
                 `${qualityLevels[i].name}</label>` +
                 `</li>`;
         }
 
         //playbackQuality = playbackQuality;
 
-        //player.qualitySelector = player.qualityButton.querySelector(`.${t.options.classPrefix}quality-selector`);
+        //player.qualitySelector = player.qualityButton.querySelector(`.${t.options.classPrefix}spquality-selector`);
 
         const
             inEvents = ['mouseenter', 'focusin'],
             outEvents = ['mouseleave', 'focusout'],
             // Enable inputs after they have been appended to controls to avoid tab and up/down arrow focus issues
             radios = player.qualityButton.querySelectorAll('input[type="radio"]'),
-            labels = player.qualityButton.querySelectorAll(`.${t.options.classPrefix}quality-selector-label`),
-            selector = player.qualityButton.querySelector(`.${t.options.classPrefix}quality-selector`)
+            labels = player.qualityButton.querySelectorAll(`.${t.options.classPrefix}spquality-selector-label`),
+            selector = player.qualityButton.querySelector(`.${t.options.classPrefix}spquality-selector`)
         ;
 
         // hover or keyboard focus
@@ -149,15 +153,15 @@ Object.assign(MediaElementPlayer.prototype, {
                 media.hlsPlayer.currentLevel = playbackQuality;
                 player.qualityButton.querySelector('button').innerHTML = (getQualityNameFromValue(playbackQuality));
 
-                const selected = player.qualityButton.querySelectorAll(`.${t.options.classPrefix}quality-selected`);
+                const selected = player.qualityButton.querySelectorAll(`.${t.options.classPrefix}spquality-selected`);
                 for (let i = 0, total = selected.length; i < total; i++) {
-                    mejs.Utils.removeClass(selected[i], `${t.options.classPrefix}quality-selected`);
+                    mejs.Utils.removeClass(selected[i], `${t.options.classPrefix}spquality-selected`);
                 }
 
                 self.checked = true;
-                const siblings = mejs.Utils.siblings(self, (el) => mejs.Utils.hasClass(el, `${t.options.classPrefix}quality-selector-label`));
+                const siblings = mejs.Utils.siblings(self, (el) => mejs.Utils.hasClass(el, `${t.options.classPrefix}spquality-selector-label`));
                 for (let j = 0, total = siblings.length; j < total; j++) {
-                    mejs.Utils.addClass(siblings[j], `${t.options.classPrefix}quality-selected`);
+                    mejs.Utils.addClass(siblings[j], `${t.options.classPrefix}spquality-selected`);
                 }
             });
         }
@@ -187,7 +191,7 @@ Object.assign(MediaElementPlayer.prototype, {
 	 * Always has to be prefixed with `clean` and the name that was used in MepDefaults.features list
 	 * @param {MediaElementPlayer} player
 	 */
-	cleanquality (player) {
+    clearquality (player) {
         if (player) {
             if (player.qualityButton) {
                 player.qualityButton.parentNode.removeChild(player.qualityButton);

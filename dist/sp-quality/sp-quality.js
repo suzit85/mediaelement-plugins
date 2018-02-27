@@ -13,11 +13,7 @@
 
 mejs.i18n.en['mejs.quality-chooser'] = 'Quality Chooser';
 
-Object.assign(mejs.MepDefaults, {
-    defaultQuality: 'auto',
-
-    qualityText: null
-});
+Object.assign(mejs.MepDefaults, {});
 
 Object.assign(MediaElementPlayer.prototype, {
     buildspquality: function buildspquality(player, controls, layers, media) {
@@ -33,12 +29,15 @@ Object.assign(MediaElementPlayer.prototype, {
                 clearInterval(interval);
 
                 media.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-                    t.createQualityLevel(player, data.levels, media);
+
+                    t.createQualityLevel(player, data, media);
                 });
             }
         }, 100);
     },
-    createQualityLevel: function createQualityLevel(player, levels, media) {
+    createQualityLevel: function createQualityLevel(player, data, media) {
+        var levels = data.levels;
+
         var t = this;
         t.clearquality(player);
         var qualityTitle = "Quality Levels";
@@ -69,23 +68,23 @@ Object.assign(MediaElementPlayer.prototype, {
         var playbackQuality = -1;
 
         player.qualityButton = document.createElement('div');
-        player.qualityButton.className = t.options.classPrefix + 'button ' + t.options.classPrefix + 'quality-button';
-        player.qualityButton.innerHTML = '<button type="button" aria-controls="' + t.id + '" title="' + qualityTitle + '" ' + ('aria-label="' + qualityTitle + '" tabindex="0">' + getQualityNameFromValue(playbackQuality) + '</button>') + ('<div class="' + t.options.classPrefix + 'quality-selector ' + t.options.classPrefix + 'offscreen">') + ('<ul class="' + t.options.classPrefix + 'quality-selector-list"></ul>') + '</div>';
+        player.qualityButton.className = t.options.classPrefix + 'button ' + t.options.classPrefix + 'spquality-button';
+        player.qualityButton.innerHTML = '<button type="button" aria-controls="' + t.id + '" title="' + qualityTitle + '" ' + ('aria-label="' + qualityTitle + '" tabindex="0">' + getQualityNameFromValue(playbackQuality) + '</button>') + ('<div class="' + t.options.classPrefix + 'spquality-selector ' + t.options.classPrefix + 'offscreen">') + ('<ul class="' + t.options.classPrefix + 'spquality-selector-list"></ul>') + '</div>';
 
         t.addControlElement(player.qualityButton, 'spquality');
 
         for (var i = 0, total = qualityLevels.length; i < total; i++) {
 
-            var inputId = t.id + '-quality-' + qualityLevels[i].value;
+            var inputId = t.id + '-spquality-' + qualityLevels[i].value;
 
-            player.qualityButton.querySelector('ul').innerHTML += '<li class="' + t.options.classPrefix + 'quality-selector-list-item">' + ('<input class="' + t.options.classPrefix + 'quality-selector-input" type="radio" name="' + t.id + '_quality"') + ('disabled="disabled" value="' + qualityLevels[i].value + '" id="' + inputId + '"  ') + ((qualityLevels[i].value === playbackQuality ? ' checked="checked"' : '') + '/>') + ('<label class="' + t.options.classPrefix + 'quality-selector-label') + ((qualityLevels[i].value === playbackQuality ? ' ' + t.options.classPrefix + 'quality-selected' : '') + '">') + (qualityLevels[i].name + '</label>') + '</li>';
+            player.qualityButton.querySelector('ul').innerHTML += '<li class="' + t.options.classPrefix + 'spquality-selector-list-item">' + ('<input class="' + t.options.classPrefix + 'spquality-selector-input" type="radio" name="' + t.id + '_quality"') + ('disabled="disabled" value="' + qualityLevels[i].value + '" id="' + inputId + '"  ') + ((qualityLevels[i].value === playbackQuality ? ' checked="checked"' : '') + '/>') + ('<label class="' + t.options.classPrefix + 'spquality-selector-label') + ((qualityLevels[i].value === playbackQuality ? ' ' + t.options.classPrefix + 'spquality-selected' : '') + '">') + (qualityLevels[i].name + '</label>') + '</li>';
         }
 
         var inEvents = ['mouseenter', 'focusin'],
             outEvents = ['mouseleave', 'focusout'],
             radios = player.qualityButton.querySelectorAll('input[type="radio"]'),
-            labels = player.qualityButton.querySelectorAll('.' + t.options.classPrefix + 'quality-selector-label'),
-            selector = player.qualityButton.querySelector('.' + t.options.classPrefix + 'quality-selector');
+            labels = player.qualityButton.querySelectorAll('.' + t.options.classPrefix + 'spquality-selector-label'),
+            selector = player.qualityButton.querySelector('.' + t.options.classPrefix + 'spquality-selector');
 
         for (var _i = 0, _total = inEvents.length; _i < _total; _i++) {
             player.qualityButton.addEventListener(inEvents[_i], function () {
@@ -111,17 +110,17 @@ Object.assign(MediaElementPlayer.prototype, {
                 media.hlsPlayer.currentLevel = playbackQuality;
                 player.qualityButton.querySelector('button').innerHTML = getQualityNameFromValue(playbackQuality);
 
-                var selected = player.qualityButton.querySelectorAll('.' + t.options.classPrefix + 'quality-selected');
+                var selected = player.qualityButton.querySelectorAll('.' + t.options.classPrefix + 'spquality-selected');
                 for (var _i4 = 0, _total4 = selected.length; _i4 < _total4; _i4++) {
-                    mejs.Utils.removeClass(selected[_i4], t.options.classPrefix + 'quality-selected');
+                    mejs.Utils.removeClass(selected[_i4], t.options.classPrefix + 'spquality-selected');
                 }
 
                 self.checked = true;
                 var siblings = mejs.Utils.siblings(self, function (el) {
-                    return mejs.Utils.hasClass(el, t.options.classPrefix + 'quality-selector-label');
+                    return mejs.Utils.hasClass(el, t.options.classPrefix + 'spquality-selector-label');
                 });
                 for (var j = 0, _total5 = siblings.length; j < _total5; j++) {
-                    mejs.Utils.addClass(siblings[j], t.options.classPrefix + 'quality-selected');
+                    mejs.Utils.addClass(siblings[j], t.options.classPrefix + 'spquality-selected');
                 }
             });
         }
@@ -140,7 +139,7 @@ Object.assign(MediaElementPlayer.prototype, {
             e.stopPropagation();
         });
     },
-    cleanquality: function cleanquality(player) {
+    clearquality: function clearquality(player) {
         if (player) {
             if (player.qualityButton) {
                 player.qualityButton.parentNode.removeChild(player.qualityButton);
