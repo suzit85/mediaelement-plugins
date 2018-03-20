@@ -23,23 +23,38 @@ Object.assign(MediaElementPlayer.prototype, {
         if (!isNative) {
             return;
         }
-
-        var interval = setInterval(function () {
-            if (media.hlsPlayer !== undefined) {
-                clearInterval(interval);
-
-                media.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-
-                    t.createQualityLevel(player, data, media);
-                });
-            }
-        }, 100);
+        console.log('buildspquality building createQualityLevelPlaceHolder');
+        t.createQualityLevelPlaceHolder(player);
+        if (Hls !== undefined) {
+            media.addEventListener(Hls.Events.MANIFEST_PARSED, function (event, data) {
+                var levels;
+                if (data && data.levels) {
+                    levels = data.levels;
+                    console.log('buildspquality building Settign from data', levels);
+                } else {
+                    levels = event.data[1].levels;
+                    console.log('buildspquality building Settign from event', levels);
+                }
+                console.log('buildspquality building MANIFEST_PARSED=', event, ', data--', data);
+                console.log('buildspquality building levels=', levels);
+                t.createQualityLevel(player, levels, media);
+            });
+        }
     },
-    createQualityLevel: function createQualityLevel(player, data, media) {
-        var levels = data.levels;
-
+    createQualityLevelPlaceHolder: function createQualityLevelPlaceHolder(player) {
         var t = this;
         t.clearquality(player);
+        var qualityTitle = "Quality Levels";
+
+        player.qualityButton = document.createElement('div');
+        player.qualityButton.className = t.options.classPrefix + 'button ' + t.options.classPrefix + 'spquality-button';
+        player.qualityButton.innerHTML = '<button type="button" aria-controls="' + t.id + '" title="' + qualityTitle + '" ' + ('aria-label="' + qualityTitle + '" tabindex="0">Auto</button>') + ('<div class="' + t.options.classPrefix + 'spquality-selector ' + t.options.classPrefix + 'offscreen">') + ('<ul class="' + t.options.classPrefix + 'spquality-selector-list"></ul>') + '</div>';
+
+        t.addControlElement(player.qualityButton, 'spquality');
+    },
+    createQualityLevel: function createQualityLevel(player, levels, media) {
+        var t = this;
+
         var qualityTitle = "Quality Levels";
 
         var qualityLevels = levels.map(function (val, idx) {
@@ -67,8 +82,6 @@ Object.assign(MediaElementPlayer.prototype, {
 
         var playbackQuality = -1;
 
-        player.qualityButton = document.createElement('div');
-        player.qualityButton.className = t.options.classPrefix + 'button ' + t.options.classPrefix + 'spquality-button';
         player.qualityButton.innerHTML = '<button type="button" aria-controls="' + t.id + '" title="' + qualityTitle + '" ' + ('aria-label="' + qualityTitle + '" tabindex="0">' + getQualityNameFromValue(playbackQuality) + '</button>') + ('<div class="' + t.options.classPrefix + 'spquality-selector ' + t.options.classPrefix + 'offscreen">') + ('<ul class="' + t.options.classPrefix + 'spquality-selector-list"></ul>') + '</div>';
 
         t.addControlElement(player.qualityButton, 'spquality');

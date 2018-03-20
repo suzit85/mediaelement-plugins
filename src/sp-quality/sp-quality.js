@@ -12,55 +12,91 @@ mejs.i18n.en['mejs.quality-chooser'] = 'Quality Chooser';
 
 // Feature configuration
 Object.assign(mejs.MepDefaults, {
-	/**
-	 * @type {String}
-	 */
-	// defaultQuality: 'auto',
-	/**
-	 * @type {String}
-	 */
-	// qualityText: null
+    /**
+     * @type {String}
+     */
+    // defaultQuality: 'auto',
+    /**
+     * @type {String}
+     */
+    // qualityText: null
 });
 
 Object.assign(MediaElementPlayer.prototype, {
 
-	/**
-	 * Feature constructor.
-	 *
-	 * Always has to be prefixed with `build` and the name that will be used in MepDefaults.features list
-	 * @param {MediaElementPlayer} player
-	 * @param {HTMLElement} controls
-	 * @param {HTMLElement} layers
-	 * @param {HTMLElement} media
-	 */
-	buildspquality (player, controls, layers, media) {
-		const
-			t = this,
+    /**
+     * Feature constructor.
+     *
+     * Always has to be prefixed with `build` and the name that will be used in MepDefaults.features list
+     * @param {MediaElementPlayer} player
+     * @param {HTMLElement} controls
+     * @param {HTMLElement} layers
+     * @param {HTMLElement} media
+     */
+    buildspquality(player, controls, layers, media) {
+        const
+            t = this,
             isNative = t.media.rendererName !== null && t.media.rendererName.match(/(native|html5)/) !== null;
 
-		if(!isNative){
-			return
-		}
+        if (!isNative) {
+            return
+        }
+        console.log('buildspquality building createQualityLevelPlaceHolder');
+        t.createQualityLevelPlaceHolder(player);
+        if (Hls !== undefined) {
+            media.addEventListener(Hls.Events.MANIFEST_PARSED, function (event, data) {
+                var levels;
+                if (data && data.levels) {
+                    levels = data.levels;
+                } else {
+                    levels = event.data[1].levels;
+                }
+                t.createQualityLevel(player, levels, media);
+            });
+        }
+        // const interval = setInterval(() => {
+        //     if (media.hlsPlayer !== undefined) {
+        //         clearInterval(interval);
+        //         // Manifest file was parsed, invoke loading method
+        //         media.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+        //             var levels;
+        //             if(data && data.levels){
+        //                 levels = data.levels;
+        //                 console.log('buildspquality building Settign from data', levels);
+        //             }else{
+        //                 levels = event.data.levels;
+        //                 console.log('buildspquality building Settign from event', levels);
+        //             }
+        //             console.log('buildspquality building MANIFEST_PARSED=', event, ', data--', data);
+        //             console.log('buildspquality building levels=', levels);
+        //             t.createQualityLevel(player, levels, media);
+        //         });
+        //     }
+        // }, 100);
 
-        const interval = setInterval(() => {
-            if (media.hlsPlayer !== undefined) {
-                clearInterval(interval);
-                // Manifest file was parsed, invoke loading method
-                media.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+    }, // build sp-quality end
 
-                    t.createQualityLevel(player, data, media);
-                });
-            }
-        }, 100);
-
-	}, // build sp-quality end
-
-    createQualityLevel(player, data, media){
+    createQualityLevelPlaceHolder(player) {
         /* NOTE: Not all smil files have levels- so it will fail if we use something other than wowza */
-        let levels = data.levels;
-
         const t = this;
         t.clearquality(player);
+        const qualityTitle = "Quality Levels";
+
+        player.qualityButton = document.createElement('div');
+        player.qualityButton.className = `${t.options.classPrefix}button ${t.options.classPrefix}spquality-button`;
+        player.qualityButton.innerHTML = `<button type="button" aria-controls="${t.id}" title="${qualityTitle}" ` +
+            `aria-label="${qualityTitle}" tabindex="0">Auto</button>` +
+            `<div class="${t.options.classPrefix}spquality-selector ${t.options.classPrefix}offscreen">` +
+            `<ul class="${t.options.classPrefix}spquality-selector-list"></ul>` +
+            `</div>`;
+
+        t.addControlElement(player.qualityButton, 'spquality');
+
+    },
+    createQualityLevel(player, levels, media) {
+        /* NOTE: Not all smil files have levels- so it will fail if we use something other than wowza */
+        const t = this;
+        // t.clearquality(player);
         const qualityTitle = "Quality Levels";
 
         let qualityLevels = levels.map(function (val, idx) {
@@ -88,9 +124,6 @@ Object.assign(MediaElementPlayer.prototype, {
 
         let playbackQuality = -1;
 
-
-        player.qualityButton = document.createElement('div');
-        player.qualityButton.className = `${t.options.classPrefix}button ${t.options.classPrefix}spquality-button`;
         player.qualityButton.innerHTML = `<button type="button" aria-controls="${t.id}" title="${qualityTitle}" ` +
             `aria-label="${qualityTitle}" tabindex="0">${getQualityNameFromValue(playbackQuality)}</button>` +
             `<div class="${t.options.classPrefix}spquality-selector ${t.options.classPrefix}offscreen">` +
@@ -136,7 +169,7 @@ Object.assign(MediaElementPlayer.prototype, {
         }
 
         for (let i = 0, total = outEvents.length; i < total; i++) {
-            player.qualityButton.addEventListener(outEvents[i],  () =>{
+            player.qualityButton.addEventListener(outEvents[i], () => {
                 mejs.Utils.addClass(selector, `${t.options.classPrefix}offscreen`);
             });
         }
@@ -186,12 +219,12 @@ Object.assign(MediaElementPlayer.prototype, {
 
 
     /**
-	 * Feature destructor.
-	 *
-	 * Always has to be prefixed with `clean` and the name that was used in MepDefaults.features list
-	 * @param {MediaElementPlayer} player
-	 */
-    clearquality (player) {
+     * Feature destructor.
+     *
+     * Always has to be prefixed with `clean` and the name that was used in MepDefaults.features list
+     * @param {MediaElementPlayer} player
+     */
+    clearquality(player) {
         if (player) {
             if (player.qualityButton) {
                 player.qualityButton.parentNode.removeChild(player.qualityButton);
