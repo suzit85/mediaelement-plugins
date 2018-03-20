@@ -30,13 +30,9 @@ Object.assign(MediaElementPlayer.prototype, {
                 var levels;
                 if (data && data.levels) {
                     levels = data.levels;
-                    console.log('buildspquality building Settign from data', levels);
                 } else {
                     levels = event.data[1].levels;
-                    console.log('buildspquality building Settign from event', levels);
                 }
-                console.log('buildspquality building MANIFEST_PARSED=', event, ', data--', data);
-                console.log('buildspquality building levels=', levels);
                 t.createQualityLevel(player, levels, media);
             });
         }
